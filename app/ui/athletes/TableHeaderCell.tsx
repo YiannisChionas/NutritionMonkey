@@ -26,7 +26,7 @@ export default function TableHeaderCell({ label, column, activeKey, order, onSor
 
   return (
     // Use <th scope="col"> for proper table semantics; aria-sort conveys sorting to assistive tech.
-    <th scope="col" aria-sort={ariaSort as any} style={{ textAlign: 'left', padding: 8 }}>
+    <th scope="col" aria-sort={ariaSort} style={{ textAlign: 'left', padding: 8 }}>
       <button
         // If inactive: sort by this column; if active: toggle the order.
         onClick={() => (isActive ? onToggleOrder() : onSort(column))}

@@ -29,7 +29,7 @@ export default function EditAthleteForm({athlete,}: {  athlete: AthleteForm;}) {
         {/* Athlete Name */}
         <div className="mb-4">
           <label htmlFor="name" className="mb-2 block text-sm font-medium">
-            Enter athlete's name
+            Enter athlete name
           </label>
           <div className="relative mt-2 rounded-md">
             <div className="relative">
@@ -59,7 +59,7 @@ export default function EditAthleteForm({athlete,}: {  athlete: AthleteForm;}) {
 
         <div className="mb-4">
           <label htmlFor="email" className="mb-2 block text-sm font-medium">
-            Enter athlete's email address
+            Enter athlete email address
           </label>
           <div className="relative mt-2 rounded-md">
             <div className="relative">
@@ -112,7 +112,7 @@ export default function EditAthleteForm({athlete,}: {  athlete: AthleteForm;}) {
         {/* Athlete Gender */}
         <fieldset>
           <legend className="mb-2 block text-sm font-medium">
-            Set the athlete's gender
+            Set the athlete gender
           </legend>
           <div className="rounded-md border border-gray-200 bg-white px-[14px] py-3">
             <div className="flex gap-4">
