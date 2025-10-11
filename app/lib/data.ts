@@ -9,7 +9,7 @@ import {
   Revenue,
 } from './definitions';
 import { formatCurrency } from './utils';
-import { AthleteField, AthleteForm, PlanItem, PlanItemStatus, PlanItemType } from './definitions-nm';
+import { AthleteField, AthleteForm, MealPlanItem, TrainingPlanItem, PlanItem, PlanItemStatus, PlanItemType, RawRow } from './definitions-nm';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -123,7 +123,10 @@ export async function fetchAthleteCardData() {
 }
 
 
+
+
 const ITEMS_PER_PAGE = 6;
+const PLAN_ITEMS_PER_PAGE = 1;
 export async function fetchFilteredInvoices(
   query: string,
   currentPage: number,
@@ -215,15 +218,16 @@ export async function fetchFilteredAthletes(
 
 export async function fetchInvoicesPages(query: string) {
   try {
-    const data = await sql`SELECT COUNT(*)
-    FROM invoices
-    JOIN customers ON invoices.customer_id = customers.id
-    WHERE
-      customers.name ILIKE ${`%${query}%`} OR
-      customers.email ILIKE ${`%${query}%`} OR
-      invoices.amount::text ILIKE ${`%${query}%`} OR
-      invoices.date::text ILIKE ${`%${query}%`} OR
-      invoices.status ILIKE ${`%${query}%`}
+    const data = await sql
+    `SELECT COUNT(*)
+      FROM invoices
+      JOIN customers ON invoices.customer_id = customers.id
+      WHERE
+        customers.name ILIKE ${`%${query}%`} OR
+        customers.email ILIKE ${`%${query}%`} OR
+        invoices.amount::text ILIKE ${`%${query}%`} OR
+        invoices.date::text ILIKE ${`%${query}%`} OR
+        invoices.status ILIKE ${`%${query}%`}
   `;
 
     const totalPages = Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
@@ -232,6 +236,64 @@ export async function fetchInvoicesPages(query: string) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch total number of invoices.');
   }
+}
+
+export async function fetchPlanItems(athleteId: string, currentPage: number, pageSize = 1) {
+  const offset = (currentPage - 1) * pageSize;
+  try {
+  const rows = await sql<PlanItem[]>
+  `SELECT id, athlete_id, type, status, start_at, notes, meal_id, training_id
+    FROM plan_items
+      WHERE athlete_id = ${athleteId}
+      ORDER BY start_at DESC
+      LIMIT ${pageSize} OFFSET ${offset}
+  `;
+  return rows;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch PlanItems.');
+}
+}
+
+export async function fetchPlanItemsPages(athleteId: string) {
+  try {
+    const rows = await sql<{ count: number }[]>`
+      SELECT COUNT(*)::int AS count
+      FROM plan_items
+      WHERE athlete_id = ${athleteId}
+    `;
+    const count = rows[0]?.count ?? 0;
+    return Math.ceil(count / PLAN_ITEMS_PER_PAGE);
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of plan_items.');
+  }
+}
+
+export async function fetchTrainingPages(athleteId: string) {
+  try {
+    const rows = await sql<{ count: number }[]>`
+      SELECT COUNT(*)::int AS count
+      FROM trainings
+      WHERE athlete_id = ${athleteId}
+    `;
+    const count = rows[0]?.count ?? 0;
+    return Math.ceil(count / PLAN_ITEMS_PER_PAGE);
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of plan_items.');
+  }
+}
+
+export async function fetchMealPlanPages(athleteId: string) {
+  const rows = await sql<{ count: number }[]>`
+    SELECT COUNT(*)::int AS count
+    FROM plan_items p
+    WHERE p.athlete_id = ${athleteId}
+      AND p.type = 'MEAL'   -- ή: AND p.meal_id IS NOT NULL
+  `;
+  const count = rows[0]?.count ?? 0;
+  return Math.ceil(count / 2);
 }
 
 export async function fetchAthletesPages(query: string) {
@@ -348,6 +410,63 @@ export async function fetchAthletes() {
   }
 }
 
+export async function fetchAthleteMealPlanItems(id:string) {
+  try {
+    const data = await sql<MealPlanItem[]>`
+      SELECT
+        p.id,
+        p.meal_id,
+        p.athlete_id,
+        p.status,
+        p.start_at::text AS start_at,
+        COALESCE(p.notes, '')      AS notes,
+        COALESCE(m.title, '')          AS title,
+        COALESCE(m.calories, 0)      AS calories,
+        COALESCE(m.protein, 0)       AS protein,
+        COALESCE(m.carbohydrates, 0) AS carbohydrates,
+        COALESCE(m.fats, 0)          AS fats,
+        COALESCE(m.tags, ARRAY[]::varchar[])          AS tags
+      FROM plan_items p
+      LEFT JOIN meals m ON m.id = p.meal_id
+      WHERE p.athlete_id = ${id}
+        AND p.type = 'MEAL'
+      ORDER BY p.start_at DESC
+    `;
+
+    return data;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch meal plan items.');
+  }
+}
+
+export async function fetchAthleteTrainingPlanItems(id:string) {
+  try {
+    const data = await sql<TrainingPlanItem[]>`
+      SELECT
+        p.id,
+        p.training_id,
+        p.athlete_id,
+        p.status,
+        p.start_at::text AS start_at,
+        COALESCE(p.notes, '')      AS notes,
+        COALESCE(t.title, '')          AS title,
+        COALESCE(t.calories, 0)      AS calories,
+        COALESCE(t.tags, ARRAY[]::varchar[])          AS tags
+      FROM plan_items p
+      LEFT JOIN trainings t ON t.id = p.training_id
+      WHERE p.athlete_id = ${id}
+        AND p.type = 'WORKOUT'
+      ORDER BY p.start_at DESC
+    `;
+    console.log(id);
+    return data;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch training plan items.');
+  }
+}
+
 export async function fetchFilteredCustomers(query: string) {
   try {
     const data = await sql<CustomersTableType[]>`
@@ -393,7 +512,6 @@ type PlanItemRow = {
 };
 
 export async function fetchAthletePlanItems(athleteId: string): Promise<PlanItem[]> {
-  // ✅ Δώσε τον τύπο ΓΡΑΜΜΗΣ (όχι array)
   const rows = (await sql`
   SELECT id, athlete_id,
     type,

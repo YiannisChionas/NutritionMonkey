@@ -20,7 +20,6 @@ function TypePill({ type }: { type: PlanItem['type'] }) {
 }
 
 function formatDateTime(iso: string) {
-  // ωραίο local format (EL)
   const d = new Date(iso);
   return d.toLocaleString('el-GR', {
     year: 'numeric',
@@ -42,7 +41,7 @@ export function PlanItemsList({ plan_items }: { plan_items: PlanItem[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
       {plan_items.map((it) => (
         <PlanItemCard key={it.id} item={it} />
       ))}
@@ -52,8 +51,7 @@ export function PlanItemsList({ plan_items }: { plan_items: PlanItem[] }) {
 
 export function PlanItemCard({ item }: { item: PlanItem }) {
   return (
-    <div className="rounded-xl bg-gray-50 shadow-sm">
-      {/* Header με badges */}
+    <div className="rounded-xl bg-gray-50 shadow-sm flex-auto">
       <div className="flex items-center justify-between gap-2 p-3">
         <TypePill type={item.type} />
         <StatusPill status={item.status} />
@@ -61,7 +59,6 @@ export function PlanItemCard({ item }: { item: PlanItem }) {
 
       {/* Info grid */}
       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3">
-        {/* Start time γεμίζει και τις 2 στήλες */}
         <div className="sm:col-span-2">
           <dt className="text-sm text-gray-500">Starts at</dt>
           <dd className="mt-1 rounded-lg bg-white px-4 py-3 text-center font-medium">

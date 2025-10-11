@@ -134,3 +134,41 @@ export type AthleteForm = {
   fat_free_mass: number;  // grams
   vo_2_max: number;
 };
+
+export type RawRow = {
+  id: string;
+  athlete_id: string;
+  type: string;                     // raw από DB
+  status: string;                   // raw από DB
+  start_at: Date | string;          // μπορεί να έρθει Date
+  notes: string | null;
+  meal_id: string | null;
+  training_id: string | null;
+};
+
+export type MealPlanItem = {
+  id: string;
+  meal_id: string;
+  athlete_id: string;
+  status: PlanItemStatus;
+  start_at: string;
+  notes: string;
+  title: string
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fats: number;
+  tags: MealTag[];
+}
+
+export type TrainingPlanItem = {
+  id: string;
+  training_id: string;
+  athlete_id: string;
+  status: PlanItemStatus;
+  start_at: string;
+  notes: string;
+  title: string
+  calories: number;
+  tags: TrainingTag[];
+}
